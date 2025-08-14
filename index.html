@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume & Cover Letter Architect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Libraries for PDF export and file reading -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;</script>
+  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+  <style>
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+    }
+    body { 
+        font-family: 'Inter', sans-serif; 
+        background-color: #020617;
+        background: linear-gradient(-45deg, #020617, #0f172a, #1e293b, #334155);
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
+        color: #e2e8f0;
+    }
+    .glass-card {
+        background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(30px);
+        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transition: all 0.4s ease-in-out; position: relative;
+    }
+    .step-container { perspective: 1000px; }
+    .step { 
+        transition: opacity 0.4s ease-in-out, transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        position: absolute; width: 100%; top: 0; left: 0;
+        padding: 2.5rem 3rem; backface-visibility: hidden;
+    }
+    .step:not(.active) { opacity: 0; pointer-events: none; transform: rotateY(90deg) scale(0.9); }
+    .step.active { transform: rotateY(0deg) scale(1); }
+    .btn { transition: all 0.2s ease-in-out; transform: translateY(0); }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2); }
+    #resume-output-container {
+        background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 3rem;
+        font-family: 'Lora', serif; color: #1a202c; line-height: 1.7; border-radius: 0.5rem;
+    }
+    #notification-toast { transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s; }
+    .aurora-glow {
+        position: absolute; width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(79, 70, 229, 0.3) 0%, rgba(79, 70, 229, 0) 60%);
+        border-radius: 50%; pointer-events: none; transition: all 0.5s ease-out; z-index: -1;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <!-- Notification Toast -->
+  <div id="notification-toast" class="hidden fixed bottom-6 left-6 max-w-md glass-card p-4 transform translate-y-[150%] z-50">
+    <div class="flex items-start gap-4">
+        <svg class="h-8 w-8 text-amber-400 flex-shrink-0 mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div class="flex-1">
+            <p class="text-lg font-semibold text-slate-100">Resume Improvement Tip</p>
+            <p id="notification-message" class="mt-1 text-sm text-slate-300"></p>
+        </div>
+        <button id="notification-close-btn" class="p-1 -m-1 text-slate-400 hover:text-white"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg></button>
+    </div>
+  </div>
+
+  <div id="main-container" class="w-full max-w-7xl mx-auto">
+    <div id="wizard-container" class="glass-card relative" style="min-height: 650px;">
+        <div class="aurora-glow"></div>
+        <div class="step-container">
+            <!-- Step 1: Initial Info -->
+            <div id="step-1" class="step active">
+                <h1 class="text-5xl font-bold text-slate-100 mb-4">AI Document Architect</h1>
+                <p class="text-xl text-slate-400 mb-12">Craft the perfect document for your next career move.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <input id="name" class="md:col-span-1 w-full bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg p-4 text-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400" placeholder="Your Full Name">
+                    <input id="role" class="md:col-span-1 w-full bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg p-4 text-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400" placeholder="Target Job Title">
+                    <textarea id="job" rows="10" class="md:col-span-2 w-full bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg p-4 text-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400" placeholder="Paste the full job description here..."></textarea>
+                </div>
+                <div class="mt-10 text-right">
+                    <button id="next-btn-1" class="btn bg-gradient-to-r from-sky-500 to-indigo-600 text-white px-10 py-4 rounded-lg font-semibold text-xl">Next Step &rarr;</button>
+                </div>
+            </div>
+            <!-- Step 2: Upload & Action -->
+            <div id="step-2" class="step">
+                <h1 class="text-5xl font-bold text-slate-100 mb-4">Provide Context</h1>
+                <p class="text-xl text-slate-400 mb-8">Upload your resume to auto-fill details and tailor results.</p>
+                <div class="p-4 bg-slate-900/50 border border-slate-700 mb-8 rounded-lg">
+                    <p id="info-summary" class="text-md font-medium text-slate-300"></p>
+                </div>
+                <label class="block text-lg font-semibold text-slate-300 mb-3">Upload Existing Resume (Optional)</label>
+                <div class="flex items-center gap-4">
+                    <input id="resumeUpload" type="file" accept=".pdf,.docx" class="block w-full text-md text-slate-300 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:font-semibold file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600 cursor-pointer"/>
+                    <button id="extractBtn" class="btn bg-slate-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-slate-500 whitespace-nowrap">Use Resume</button>
+                </div>
+                <p id="extract-status" class="text-sm text-slate-400 mt-3 h-5"></p>
+                <div class="flex flex-wrap items-center gap-4 mt-10 border-t border-slate-700 pt-8">
+                    <button id="generate-resume-btn" class="generate-btn btn bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-8 py-4 rounded-lg font-semibold text-xl flex items-center gap-3">📄 Generate Resume</button>
+                    <button id="go-to-cover-letter-step-btn" class="btn bg-gradient-to-r from-emerald-600 to-green-500 text-white px-8 py-4 rounded-lg font-semibold text-xl flex items-center gap-3">✨ Create Cover Letter</button>
+                </div>
+            </div>
+             <!-- Step 3: Cover Letter Details -->
+            <div id="step-3" class="step">
+                <h1 class="text-5xl font-bold text-slate-100 mb-4">Cover Letter Details</h1>
+                <p class="text-xl text-slate-400 mb-12">Add recipient information for a professional touch.</p>
+                <div class="space-y-6">
+                    <input id="hiringManager" class="w-full bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg p-4 text-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400" placeholder="Hiring Manager's Name (Optional)">
+                    <input id="companyName" class="w-full bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg p-4 text-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400" placeholder="Company Name">
+                    <textarea id="companyAddress" rows="3" class="w-full bg-slate-900/50 border-slate-700 text-slate-200 rounded-lg p-4 text-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400" placeholder="Company Address"></textarea>
+                </div>
+                <div class="mt-10 text-right">
+                    <button id="generate-cover-letter-btn" class="generate-btn btn bg-gradient-to-r from-emerald-600 to-green-500 text-white px-10 py-4 rounded-lg font-semibold text-xl">Generate Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Area -->
+    <div id="output-area" class="hidden mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div class="lg:col-span-1 glass-card p-6 sticky top-8">
+             <h2 class="text-3xl font-bold text-slate-100 mb-6">Controls</h2>
+             <div class="space-y-4">
+                <button id="download-pdf-btn" class="w-full btn bg-red-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-red-500 flex items-center justify-center gap-2">Download PDF</button>
+                <button id="start-over-btn" class="w-full btn bg-slate-600 text-slate-200 px-5 py-3 rounded-lg font-semibold hover:bg-slate-500 flex items-center justify-center gap-2">Start Over</button>
+             </div>
+        </div>
+        <div class="lg:col-span-2">
+            <div id="generation-status" class="glass-card text-center p-12"></div>
+            <div id="resume-output-container" class="hidden"></div>
+        </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
